@@ -17,6 +17,8 @@
  const leven = require('fast-levenshtein');
  const protect = require('./protect.json');
  const fs = require('fs');
+ const idnanormalizer = require('idna-normalize')
+ const domainnormalize = new idnanormalizer()
 
  const yellow = color.yellow.underline;
  const danger = color.redBright.underline;
@@ -68,7 +70,7 @@ function checkLevenshtein(input, str){
   var phishingOf = '';
   var length = 0;
   let inputdomain = tld.parse(input).domain;
-  // Filter subdominio
+
   let subdomain = tld.parse(inputdomain).subdomain;
   let tlddomain = tld.parse(inputdomain).publicSuffix;
   let tlddomainstr = "." + tlddomain;
@@ -91,7 +93,7 @@ function checkLevenshtein(input, str){
 
     if(smallestleven <= lengthtouse){
       if(detected.indexOf(input) <= -1){
-        detected.push(input);
+        detected.push(str);
         console.log("Domain: " + input + " was found as levenshtein <= " + lengthtouse + " of: " + protect[phishingOf]);
         console.log(JSON.stringify(detected, null, 4))
       }
@@ -116,7 +118,7 @@ function checkLevenshtein(input, str){
 
     if(smallestleven <= lengthtouse){
       if(detected.indexOf(input) <= -1){
-        detected.push(input);
+        detected.push(str);
         console.log("Domain: " + input + " was found as levenshtein <= " + lengthtouse + " of: " + protect[phishingOf]);
         console.log(JSON.stringify(detected, null, 4))
       }
@@ -141,7 +143,7 @@ function checkLevenshtein(input, str){
 
       if(smallestleven <= lengthtouse){
         if(detected.indexOf(input) <= -1){
-          detected.push(input);
+          detected.push(str);
           console.log("Domain: " + input + " was found as levenshtein <= " + lengthtouse + " of: " + protect[phishingOf]);
           console.log(JSON.stringify(detected, null, 4))
         }
@@ -176,8 +178,6 @@ function checkLevenshtein(input, str){
  			}
  		}
 
-		// Retorna vazio se não retornar uma messagem de atualização
-
 		if (!lodash.includes(certstream, 'certificate_update')) {
 			return;
 		}
@@ -201,7 +201,6 @@ function checkLevenshtein(input, str){
               if (lodash.startsWith(domains, '*.')) {
                 domains = lodash.replace(domains, '*.', '', 0);
               }
-              //console.log(domains)
               str = '';
               newstring = '';
               str = domains;
@@ -211,35 +210,10 @@ function checkLevenshtein(input, str){
                           .replace('www.','')
                           .split(/[/?#]/)[0]
                           .toLowerCase();
+              var input = domainnormalize.normalize(str);
 
-              //str = punycode.toUnicode(str);
-              //newstring = normalize(str)
-              // Expressões regulares criadas com base no comportamento dos sites de phishing
-              if (checkLevenshtein(str)){
+              if (checkLevenshtein(input, str)){
                 let keywords = (domains || []);
-              }
-            }
-            else{
-              let suspicious = true;
-              if (lodash.startsWith(domains, '*.')) {
-                domains = lodash.replace(domains, '*.', '', 0);
-              }
-              //console.log(domains)
-              str = '';
-              newstring = '';
-              str = domains;
-              str = str   .replace('http://','')
-                          .replace('https://','')
-                          .replace('[.]','.')
-                          .replace('www.','')
-                          .split(/[/?#]/)[0]
-                          .toLowerCase();
-
-              //str = punycode.toUnicode(str);
-              //newstring = normalize(str)
-              // Expressões regulares criadas com base no comportamento dos sites de phishing
-              if (checkLevenshtein(str)){
-                return;
               }
             }
           });
@@ -260,13 +234,10 @@ status.start({
 function startprint(detected){
   console.log("Start print process detected")
   startprintstatus = true;
-  // Print outputs to output file
   setTimeout(function(){
-    //console.log(JSON.stringify(detected, null, 4))
     fs.writeFile('./certstreamblacklist.json', JSON.stringify(detected, null, 4), 'utf8', function(e,results){
       if(e) console.log(e);
       else{
-        //console.log("Done writing to scamslist.json");
         startprintstatus = false;
       }
     });
