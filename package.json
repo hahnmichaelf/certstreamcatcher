@@ -11,6 +11,10 @@
   "dependencies": {
     "certstream": "^1.1.0",
     "cli-color": "^1.2.0",
+    "fast-levenshtein": "^2.0.6",
+    "fs": "0.0.1-security",
+    "idna-normalize": "^1.0.0",
+    "json": "^9.0.6",
     "lodash": "^4.17.4",
     "node-status": "^1.0.0",
     "tldjs": "^2.2.0"
